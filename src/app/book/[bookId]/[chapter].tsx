@@ -48,8 +48,8 @@ export default function ChapterReaderScreen() {
       <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'bottom']}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
           {verses.map((verse) => (
-            <ThemedText key={verse.id} style={styles.verseLine}>
-              <ThemedText type="smallBold" themeColor="textSecondary">
+            <ThemedText key={verse.id} type="verse" style={styles.verseLine}>
+              <ThemedText type="verse" themeColor="accent" style={styles.verseLabel}>
                 {verse.verse_label}{' '}
               </ThemedText>
               {verse.text}
@@ -70,10 +70,10 @@ export default function ChapterReaderScreen() {
           <Pressable
             disabled={!canGoNext}
             onPress={() => router.replace(`/book/${bookId}/${chapter + 1}`)}>
-            <ThemedView
-              type={canGoNext ? 'backgroundElement' : 'background'}
-              style={styles.pagerButton}>
-              <ThemedText themeColor={canGoNext ? 'text' : 'textSecondary'}>Next</ThemedText>
+            <ThemedView type={canGoNext ? 'accent' : 'background'} style={styles.pagerButton}>
+              <ThemedText themeColor={canGoNext ? 'accentText' : 'textSecondary'} type="smallBold">
+                Next
+              </ThemedText>
             </ThemedView>
           </Pressable>
         </View>
@@ -99,7 +99,10 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   verseLine: {
-    lineHeight: 26,
+    lineHeight: 30,
+  },
+  verseLabel: {
+    fontSize: 14,
   },
   pager: {
     flexDirection: 'row',

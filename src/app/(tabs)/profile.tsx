@@ -23,8 +23,10 @@ function Field(props: ComponentProps<typeof TextInput>) {
 function PrimaryButton({ label, onPress, disabled }: { label: string; onPress: () => void; disabled?: boolean }) {
   return (
     <Pressable onPress={onPress} disabled={disabled}>
-      <ThemedView type="backgroundSelected" style={[styles.primaryButton, disabled && styles.disabled]}>
-        <ThemedText type="smallBold">{label}</ThemedText>
+      <ThemedView type="accent" style={[styles.primaryButton, disabled && styles.disabled]}>
+        <ThemedText type="smallBold" themeColor="accentText">
+          {label}
+        </ThemedText>
       </ThemedView>
     </Pressable>
   );

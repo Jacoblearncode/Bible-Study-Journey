@@ -21,10 +21,12 @@ export function TranslationSwitcher() {
         const selected = option.id === translationId;
         return (
           <Pressable key={option.id} onPress={() => setTranslationId(option.id)}>
-            <ThemedView
-              type={selected ? 'backgroundSelected' : 'backgroundElement'}
-              style={styles.pill}>
-              <ThemedText type={selected ? 'smallBold' : 'small'}>{option.label}</ThemedText>
+            <ThemedView type={selected ? 'accent' : 'backgroundElement'} style={styles.pill}>
+              <ThemedText
+                type={selected ? 'smallBold' : 'small'}
+                themeColor={selected ? 'accentText' : 'text'}>
+                {option.label}
+              </ThemedText>
             </ThemedView>
           </Pressable>
         );
