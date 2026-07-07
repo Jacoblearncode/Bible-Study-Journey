@@ -1,13 +1,15 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { SQLiteProvider } from 'expo-sqlite';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 
-import AppTabs from '@/components/app-tabs';
+import { DatabaseLoadingFallback } from '@/components/database-loading-fallback';
+import { ReadingPreferencesProvider } from '@/lib/reading-preferences';
 
 SplashScreen.preventAutoHideAsync();
 
-export default function TabLayout() {
+export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   useEffect(() => {
@@ -16,7 +18,18 @@ export default function TabLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AppTabs />
+      <Suspense fallback={<DatabaseLoadingFallback />}>
+        <SQLiteProvider
+          databaseName="bible.db"
+          assetSource={{ assetId: require('@/assets/bible/bible.db') }}
+          useSuspense>
+          <ReadingPreferencesProvider>
+            <Stack>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            </Stack>
+          </ReadingPreferencesProvider>
+        </SQLiteProvider>
+      </Suspense>
     </ThemeProvider>
   );
 }

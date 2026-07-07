@@ -36,6 +36,9 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
+# Bible source data, downloaded once by scripts/build-bible-db.mjs
+scripts/.source-cache/
+
 example
 
 # generated native folders
