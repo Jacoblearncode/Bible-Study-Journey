@@ -26,11 +26,17 @@ live under `src/app`.
 ```
 src/
   app/            file-based routes (one file per screen/tab)
+    (tabs)/       Read / Search / Circles / Notes / Profile
+    book/         chapter grid + verse reader (pushed on top of the tabs)
   components/     shared UI components
   constants/      theme tokens
+  lib/            Bible data types, SQLite queries, reading preferences
   hooks/
+assets/
+  bible/bible.db  bundled offline Bible database (built by the script below)
 scripts/
-  build-bible-db.mjs   fetches public-domain Bible text once and builds the bundled SQLite db
+  build-bible-db.mjs   builds assets/bible/bible.db from public-domain USFX sources
+                       (github.com/seven1m/open-bibles) — run with `npm run build:bible-db`
 docs/
   project-plan.md      the original project plan
   firestore-schema.md  data model for circles/posts/highlights (Phase 2, once Firebase is wired up)
@@ -40,7 +46,9 @@ docs/
 
 Currently in progress:
 - [x] Project skeleton — navigation shell for Read / Search / Circles / Notes / Profile
-- [ ] Offline Bible reader + full-text search (bundled SQLite, no backend)
+- [x] Offline Bible reader + full-text search (bundled SQLite, no backend) — Chinese Union
+      Version (traditional & simplified) and the World English Bible; search works on
+      iOS/Android, not yet on web (expo-sqlite's web build doesn't ship FTS5)
 - [ ] Auth + Firestore posts feed for circles
 - [ ] Admin moderation, push notifications, additional translations
 
