@@ -23,18 +23,36 @@ service cloud.firestore {
       allow write: if isSignedIn() && request.auth.uid == userId;
     }
 
+    // Firestore requires this separate top-level wildcard match to authorize
+    // collectionGroup('members') queries (used by subscribeToUserCircles to
+    // list every circle a user belongs to) — a rule nested under
+    // circles/{circleId} only covers direct-path access (get, or a plain
+    // collection query already scoped to one circle's members), not a
+    // cross-circle collection group list.
+    match /{path=**}/members/{memberId} {
+      allow read: if isSignedIn();
+    }
+
     match /circles/{circleId} {
       allow read: if isSignedIn();
-      // Circle creation/renaming is an admin-console/Phase-2 concern; no
-      // client-side create/update/delete for now.
-      allow write: if false;
+      // Any signed-in user (including guests) can create a circle, as
+      // themselves as the creator. Renaming/deleting a circle is deferred.
+      allow create: if isSignedIn() && request.resource.data.createdBy == request.auth.uid;
+      allow update, delete: if false;
 
       match /members/{memberId} {
-        allow read: if isSignedIn();
-        // Users can add themselves as a plain member (join) or remove
-        // themselves (leave); only an existing admin can set someone's role.
-        allow create: if isSignedIn() && request.auth.uid == memberId
-          && request.resource.data.role == 'member';
+        // Users can add themselves as a plain member (join by knowing the
+        // circle id) or remove themselves (leave). The one exception: the
+        // circle's own creator may add themselves as 'admin' instead of
+        // 'member' — checked against the circle doc's createdBy, not just
+        // "any admin can promote anyone" — so this can't be used to
+        // self-promote in someone else's circle. Only an existing admin can
+        // change someone else's role after that.
+        allow create: if isSignedIn() && request.auth.uid == memberId && (
+          request.resource.data.role == 'member' ||
+          (request.resource.data.role == 'admin' &&
+            get(/databases/$(database)/documents/circles/$(circleId)).data.createdBy == request.auth.uid)
+        );
         allow update: if isSignedIn() && isAdminOf(circleId);
         allow delete: if isSignedIn() && (request.auth.uid == memberId || isAdminOf(circleId));
       }

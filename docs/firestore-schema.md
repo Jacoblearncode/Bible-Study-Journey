@@ -1,10 +1,11 @@
 # Firestore data model — circles, posts, highlights
 
-Status: **design only**. No Firebase project is wired into the app yet (see
-build order in [`project-plan.md`](./project-plan.md) — this is step 2,
-after the offline reader). This doc exists so that when Auth + Firestore
-land, the schema is already settled for multiple circles per user rather
-than needing a migration later.
+Status: **implemented** for circles/membership/posts (see
+`src/lib/circles-queries.ts`, `src/app/(tabs)/circles.tsx`). Highlights/notes
+are still unimplemented — the schema below for that collection is still a
+plan, not code. The deployed rules live in `firestore.rules` and
+`firestore.indexes.json` at the repo root, not in this doc — treat this file
+as the rationale/reference, not the source of truth for what's live.
 
 ## Collections
 
@@ -20,17 +21,20 @@ circles/{circleId}
     - joinedAt
 
 posts/{postId}
-  - circleId, authorId, text, imageUrl (Cloudinary), createdAt, flagged (bool)
+  - circleId, authorId, authorName, text, imageUrl (Cloudinary), createdAt, flagged (bool)
 
 highlights/{userId}_{book}_{chapter}_{verse}
   - userId, book, chapter, verse, color, note, updatedAt
 ```
 
-This is the same shape as the original plan's draft, with one addition: a
-`userId` field inside each `circles/{circleId}/members/{userId}` doc,
-duplicating the document ID. A user can already belong to any number of
-circles under this structure — the field isn't needed for that, it's needed
-for the query below.
+Two additions beyond the original plan's draft:
+- A `userId` field inside each `circles/{circleId}/members/{userId}` doc,
+  duplicating the document ID — needed for the collection group query below.
+- `authorName` denormalized onto each post at write time, instead of joining
+  against `users/{authorId}` to render the feed. Trade-off: the name shown
+  on a post is a snapshot from when it was posted, not live-updated if
+  someone changes their display name later. Acceptable for a small group;
+  revisit if that staleness becomes a real complaint.
 
 ## Listing a user's circles
 
@@ -54,46 +58,31 @@ the extra query).
 
 ## Security rules — design principles
 
-(Carried forward from the plan, unchanged in substance.)
+The actual, deployed rules are in `firestore.rules` at the repo root — read
+that for the literal logic. Principles behind it:
 
+- Any signed-in user (including anonymous guests) can create a circle and
+  can join any other circle by ID — there's no invite-approval flow. Fine
+  for a small trusted group; revisit if that ever needs gatekeeping.
+- Only a circle's actual creator can self-assign the `admin` role when
+  joining (checked against the circle doc's `createdBy`, not just "any
+  admin can promote anyone") — otherwise everyone else who joins gets
+  `member`. This is how the "founding admin" gets set without a Cloud
+  Function: `src/lib/circles-queries.ts`'s `createCircle` writes the circle
+  doc, then (once that's committed) writes the membership doc with
+  `role: 'admin'`, sequentially rather than in a batch, so the rule's
+  `get()` on the circle doc reliably sees `createdBy` already set.
 - Users can only write posts to circles they belong to.
 - Only a post's author or a circle admin can delete it.
-- Highlights/notes are private to each user by default.
+- Highlights/notes are private to each user by default (not yet
+  implemented — this rule exists in `firestore.rules` ahead of the feature).
 - Membership checks read the specific circle's member doc
   (`circles/$(circleId)/members/$(request.auth.uid)`), not a denormalized
   array — the array could drift out of sync; the subcollection is the
   source of truth.
-
-Sketch (not yet deployed):
-
-```
-match /circles/{circleId} {
-  match /members/{memberId} {
-    allow read: if request.auth != null;
-    allow write: if request.auth.uid == memberId
-      || get(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid)).data.role == 'admin';
-  }
-}
-
-match /posts/{postId} {
-  function isMember(circleId) {
-    return exists(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid));
-  }
-  function isAdminOf(circleId) {
-    return get(/databases/$(database)/documents/circles/$(circleId)/members/$(request.auth.uid)).data.role == 'admin';
-  }
-
-  allow read: if request.auth != null && isMember(resource.data.circleId);
-  allow create: if request.auth != null
-    && request.resource.data.authorId == request.auth.uid
-    && isMember(request.resource.data.circleId);
-  allow delete: if request.auth.uid == resource.data.authorId || isAdminOf(resource.data.circleId);
-}
-
-match /highlights/{highlightId} {
-  allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
-}
-```
+- Renaming or deleting a circle isn't wired up client-side yet — those
+  operations are blocked at the rules level until there's a real admin flow
+  for them.
 
 ## What's still a product decision, not a schema one
 

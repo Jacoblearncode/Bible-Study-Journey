@@ -1,55 +1,12 @@
-import { useState, type ComponentProps } from 'react';
-import { ActivityIndicator, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { useState } from 'react';
+import { ActivityIndicator, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ErrorMessage, Field, PrimaryButton, SecondaryButton } from '@/components/form';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth-context';
-
-function Field(props: ComponentProps<typeof TextInput>) {
-  const theme = useTheme();
-  return (
-    <TextInput
-      placeholderTextColor={theme.textSecondary}
-      style={[styles.input, { color: theme.text, backgroundColor: theme.backgroundElement }]}
-      autoCapitalize="none"
-      {...props}
-    />
-  );
-}
-
-function PrimaryButton({ label, onPress, disabled }: { label: string; onPress: () => void; disabled?: boolean }) {
-  return (
-    <Pressable onPress={onPress} disabled={disabled}>
-      <ThemedView type="accent" style={[styles.primaryButton, disabled && styles.disabled]}>
-        <ThemedText type="smallBold" themeColor="accentText">
-          {label}
-        </ThemedText>
-      </ThemedView>
-    </Pressable>
-  );
-}
-
-function SecondaryButton({ label, onPress, disabled }: { label: string; onPress: () => void; disabled?: boolean }) {
-  return (
-    <Pressable onPress={onPress} disabled={disabled}>
-      <ThemedView type="backgroundElement" style={[styles.primaryButton, disabled && styles.disabled]}>
-        <ThemedText type="smallBold">{label}</ThemedText>
-      </ThemedView>
-    </Pressable>
-  );
-}
-
-function ErrorMessage({ message }: { message: string | null }) {
-  if (!message) return null;
-  return (
-    <ThemedText type="small" style={styles.error}>
-      {message}
-    </ThemedText>
-  );
-}
 
 function friendlyAuthError(err: unknown): string {
   const code = (err as { code?: string })?.code ?? '';
@@ -295,25 +252,8 @@ const styles = StyleSheet.create({
   tabItem: {
     paddingVertical: Spacing.one,
   },
-  input: {
-    borderRadius: Spacing.three,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    fontSize: 16,
-  },
-  primaryButton: {
-    alignItems: 'center',
-    paddingVertical: Spacing.two,
-    borderRadius: Spacing.three,
-  },
-  disabled: {
-    opacity: 0.5,
-  },
   orText: {
     textAlign: 'center',
-  },
-  error: {
-    color: '#d94141',
   },
   card: {
     padding: Spacing.three,
