@@ -1,11 +1,12 @@
-import { NativeTabs } from 'expo-router/unstable-native-tabs';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { Icon, Label, NativeTabs, VectorIcon } from 'expo-router/unstable-native-tabs';
 import { useColorScheme } from 'react-native';
 
 import { Colors } from '@/constants/theme';
 
 export default function AppTabs() {
   const scheme = useColorScheme();
-  const colors = Colors[scheme === 'unspecified' ? 'light' : scheme];
+  const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
 
   return (
     <NativeTabs
@@ -13,36 +14,39 @@ export default function AppTabs() {
       indicatorColor={colors.backgroundSelected}
       labelStyle={{ selected: { color: colors.accent } }}>
       <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Label>Read</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
+        <Label>Read</Label>
+        <Icon
           sf={{ default: 'book.closed', selected: 'book.closed.fill' }}
-          md="menu_book"
+          androidSrc={<VectorIcon family={MaterialIcons} name="menu-book" />}
         />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="search">
-        <NativeTabs.Trigger.Label>Search</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="magnifyingglass" md="search" />
+        <Label>Search</Label>
+        <Icon sf="magnifyingglass" androidSrc={<VectorIcon family={MaterialIcons} name="search" />} />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="circles">
-        <NativeTabs.Trigger.Label>Circles</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
+        <Label>Circles</Label>
+        <Icon
           sf={{ default: 'person.3', selected: 'person.3.fill' }}
-          md="groups"
+          androidSrc={<VectorIcon family={MaterialIcons} name="groups" />}
         />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="notes">
-        <NativeTabs.Trigger.Label>Notes</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="square.and.pencil" md="edit_note" />
+        <Label>Notes</Label>
+        <Icon
+          sf="square.and.pencil"
+          androidSrc={<VectorIcon family={MaterialIcons} name="edit-note" />}
+        />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="profile">
-        <NativeTabs.Trigger.Label>Profile</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
+        <Label>Profile</Label>
+        <Icon
           sf={{ default: 'person.crop.circle', selected: 'person.crop.circle.fill' }}
-          md="account_circle"
+          androidSrc={<VectorIcon family={MaterialIcons} name="account-circle" />}
         />
       </NativeTabs.Trigger>
     </NativeTabs>
