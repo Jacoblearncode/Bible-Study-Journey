@@ -6,6 +6,7 @@ import {
   linkWithCredential,
   linkWithPopup,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   signInAnonymously,
   signInWithCredential,
   signInWithEmailAndPassword,
@@ -50,6 +51,7 @@ type AuthContextValue = {
   initializing: boolean;
   signUpWithEmail: (email: string, password: string, displayName: string) => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
+  sendPasswordReset: (email: string) => Promise<void>;
   continueAsGuest: () => Promise<void>;
   linkGuestWithEmail: (email: string, password: string, displayName: string) => Promise<void>;
   signInWithGoogleCredential: (credential: AuthCredential) => Promise<void>;
@@ -104,6 +106,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       async signInWithEmail(email, password) {
         await signInWithEmailAndPassword(auth, email, password);
+      },
+      async sendPasswordReset(email) {
+        await sendPasswordResetEmail(auth, email);
       },
       async continueAsGuest() {
         const credential = await signInAnonymously(auth);

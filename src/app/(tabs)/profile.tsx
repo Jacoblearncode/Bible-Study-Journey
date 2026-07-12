@@ -19,16 +19,64 @@ function friendlyAuthError(err: unknown): string {
       return 'Password should be at least 6 characters.';
     case 'auth/invalid-credential':
     case 'auth/wrong-password':
-    case 'auth/user-not-found':
       return 'Email or password is incorrect.';
+    case 'auth/user-not-found':
+      return "We couldn't find an account with that email.";
     default:
       return 'Something went wrong. Please try again.';
   }
 }
 
+function ForgotPasswordForm({ onBack }: { onBack: () => void }) {
+  const { sendPasswordReset } = useAuth();
+  const [email, setEmail] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
+
+  const submit = async () => {
+    setError(null);
+    setSubmitting(true);
+    try {
+      await sendPasswordReset(email.trim());
+      setSent(true);
+    } catch (err) {
+      setError(friendlyAuthError(err));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (sent) {
+    return (
+      <View style={styles.formGap}>
+        <ThemedText type="smallBold">Check your email</ThemedText>
+        <ThemedText type="small" themeColor="textSecondary">
+          If there&apos;s an account for {email.trim()}, a password reset link is on its way.
+        </ThemedText>
+        <SecondaryButton label="Back to sign in" onPress={onBack} />
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.formGap}>
+      <ThemedText type="smallBold">Reset your password</ThemedText>
+      <Field placeholder="Email" value={email} onChangeText={setEmail} keyboardType="email-address" />
+      <ErrorMessage message={error} />
+      <PrimaryButton
+        label={submitting ? 'Sending...' : 'Send reset email'}
+        onPress={submit}
+        disabled={submitting || !email.trim()}
+      />
+      <SecondaryButton label="Back to sign in" onPress={onBack} disabled={submitting} />
+    </View>
+  );
+}
+
 function SignedOutView() {
   const { signUpWithEmail, signInWithEmail, continueAsGuest, signInWithGooglePopup } = useAuth();
-  const [mode, setMode] = useState<'signIn' | 'signUp'>('signIn');
+  const [mode, setMode] = useState<'signIn' | 'signUp' | 'reset'>('signIn');
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -51,6 +99,10 @@ function SignedOutView() {
     }
   };
 
+  if (mode === 'reset') {
+    return <ForgotPasswordForm onBack={() => setMode('signIn')} />;
+  }
+
   return (
     <View style={styles.formGap}>
       <View style={styles.tabRow}>
@@ -67,6 +119,14 @@ function SignedOutView() {
       )}
       <Field placeholder="Email" value={email} onChangeText={setEmail} keyboardType="email-address" />
       <Field placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry />
+
+      {mode === 'signIn' && (
+        <Pressable onPress={() => setMode('reset')}>
+          <ThemedText type="small" themeColor="textSecondary">
+            Forgot password?
+          </ThemedText>
+        </Pressable>
+      )}
 
       <ErrorMessage message={error} />
 
