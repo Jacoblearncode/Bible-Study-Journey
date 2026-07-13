@@ -1,11 +1,10 @@
 # Firestore data model — circles, posts, highlights
 
-Status: **implemented** for circles/membership/posts (see
-`src/lib/circles-queries.ts`, `src/app/(tabs)/circles.tsx`). Highlights/notes
-are still unimplemented — the schema below for that collection is still a
-plan, not code. The deployed rules live in `firestore.rules` and
-`firestore.indexes.json` at the repo root, not in this doc — treat this file
-as the rationale/reference, not the source of truth for what's live.
+Status: **implemented** in full (circles/membership/posts in
+`src/lib/circles-queries.ts`; highlights/notes in `src/lib/notes-queries.ts`).
+The deployed rules live in `firestore.rules` and `firestore.indexes.json` at
+the repo root, not in this doc — treat this file as the rationale/reference,
+not the source of truth for what's live.
 
 ## Collections
 
@@ -24,10 +23,10 @@ posts/{postId}
   - circleId, authorId, authorName, text, imageUrl (Cloudinary), createdAt, flagged (bool)
 
 highlights/{userId}_{book}_{chapter}_{verse}
-  - userId, book, chapter, verse, color, note, updatedAt
+  - userId, book, chapter, verse, note, updatedAt
 ```
 
-Two additions beyond the original plan's draft:
+Three deviations from the original plan's draft:
 - A `userId` field inside each `circles/{circleId}/members/{userId}` doc,
   duplicating the document ID — needed for the collection group query below.
 - `authorName` denormalized onto each post at write time, instead of joining
@@ -35,6 +34,11 @@ Two additions beyond the original plan's draft:
   on a post is a snapshot from when it was posted, not live-updated if
   someone changes their display name later. Acceptable for a small group;
   revisit if that staleness becomes a real complaint.
+- Dropped the `color` field from highlights. A highlight is just "this
+  document exists for this verse" — one accent color, no picker. Simpler to
+  build and use; add color back if a real request for it shows up. The
+  document doubles as a note holder even with an empty `note` string, so
+  "highlighted, no note" and "highlighted with a note" are the same shape.
 
 ## Listing a user's circles
 

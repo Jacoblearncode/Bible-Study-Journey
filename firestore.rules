@@ -69,8 +69,13 @@ service cloud.firestore {
     }
 
     match /highlights/{highlightId} {
-      allow read, write: if isSignedIn()
-        && request.auth.uid == (request.resource.data.userId != null ? request.resource.data.userId : resource.data.userId);
+      // request.resource doesn't exist at all for reads (get/list), and
+      // resource doesn't exist for create — a single ternary referencing
+      // both crashes list queries with "Property resource is undefined"
+      // rather than gracefully short-circuiting. Split by operation instead.
+      allow read: if isSignedIn() && request.auth.uid == resource.data.userId;
+      allow create, update: if isSignedIn() && request.auth.uid == request.resource.data.userId;
+      allow delete: if isSignedIn() && request.auth.uid == resource.data.userId;
     }
   }
 }
