@@ -77,7 +77,7 @@ export default function NotesScreen() {
           }
           renderItem={({ item }) => (
             <Pressable onPress={() => router.push(`/book/${item.book}/${item.chapter}`)}>
-              <ThemedView type="backgroundElement" style={styles.row}>
+              <ThemedView type="backgroundElement" elevated style={styles.row}>
                 <ThemedText type="smallBold" themeColor="accent">
                   {bookName(item.book)} {item.chapter}:{item.verse}
                 </ThemedText>

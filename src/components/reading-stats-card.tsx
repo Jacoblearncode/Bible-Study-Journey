@@ -61,7 +61,7 @@ function TodayLogEditor({ entry, onClose }: { entry: ReadingLogEntry | null; onC
   };
 
   return (
-    <ThemedView type="backgroundElement" style={styles.editorCard}>
+    <ThemedView type="backgroundElement" elevated style={styles.editorCard}>
       {entry && entry.chapters.length > 0 && (
         <ThemedText type="small" themeColor="textSecondary">
           Read today: {entry.chapters.map((c) => `${c.bookId} ${c.chapter}`).join(', ')}
@@ -112,7 +112,7 @@ export function ReadingStatsCard() {
   return (
     <View style={styles.container}>
       <Pressable onPress={() => setExpanded((v) => !v)}>
-        <ThemedView type="backgroundElement" style={styles.card}>
+        <ThemedView type="backgroundElement" elevated style={styles.card}>
           <View style={styles.streakColumn}>
             <ThemedText type="smallBold">
               {streak > 0 ? `🔥 ${streak} day${streak === 1 ? '' : 's'}` : 'Start a streak'}

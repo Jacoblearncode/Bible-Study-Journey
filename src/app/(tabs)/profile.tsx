@@ -241,7 +241,7 @@ function SignedInView() {
 
   return (
     <View style={styles.formGap}>
-      <ThemedView type="backgroundElement" style={styles.card}>
+      <ThemedView type="backgroundElement" elevated style={styles.card}>
         <ThemedText type="smallBold">{user.displayName ?? 'Anonymous'}</ThemedText>
         {user.email && (
           <ThemedText type="small" themeColor="textSecondary">

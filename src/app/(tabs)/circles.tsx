@@ -44,7 +44,7 @@ function QuickActionTile({
 }) {
   return (
     <Pressable style={styles.tile} onPress={onPress}>
-      <ThemedView type={active ? 'accent' : 'backgroundElement'} style={styles.tileInner}>
+      <ThemedView type={active ? 'accent' : 'backgroundElement'} elevated style={styles.tileInner}>
         <ThemedText type="smallBold" themeColor={active ? 'accentText' : 'text'}>
           {label}
         </ThemedText>
@@ -87,7 +87,7 @@ function CreateCircleForm({ onDone }: { onDone: (circleId: string) => void }) {
         <ThemedText type="small" themeColor="textSecondary">
           Share this ID with your group so they can join it:
         </ThemedText>
-        <ThemedView type="backgroundElement" style={styles.idBox}>
+        <ThemedView type="backgroundElement" elevated style={styles.idBox}>
           <ThemedText type="smallBold" selectable>
             {createdId}
           </ThemedText>
@@ -186,7 +186,7 @@ function PostComposer({ circleId }: { circleId: string }) {
 
 function PostRow({ post }: { post: Post }) {
   return (
-    <ThemedView type="backgroundElement" style={styles.postRow}>
+    <ThemedView type="backgroundElement" elevated style={styles.postRow}>
       <View style={styles.postHeader}>
         <ThemedText type="smallBold">{post.authorName}</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">

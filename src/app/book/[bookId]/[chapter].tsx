@@ -37,7 +37,7 @@ function VerseEditor({
 
   if (!user) {
     return (
-      <ThemedView type="backgroundElement" style={styles.editorCard}>
+      <ThemedView type="backgroundElement" elevated style={styles.editorCard}>
         <ThemedText type="small" themeColor="textSecondary">
           Sign in to highlight verses and save notes.
         </ThemedText>
@@ -73,7 +73,7 @@ function VerseEditor({
   };
 
   return (
-    <ThemedView type="backgroundElement" style={styles.editorCard}>
+    <ThemedView type="backgroundElement" elevated style={styles.editorCard}>
       <Field
         placeholder="Add a note (optional)"
         value={note}

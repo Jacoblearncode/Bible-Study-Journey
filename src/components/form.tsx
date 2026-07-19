@@ -29,7 +29,10 @@ export function PrimaryButton({
 }) {
   return (
     <Pressable onPress={onPress} disabled={disabled}>
-      <ThemedView type="accent" style={[styles.button, disabled && styles.disabled]}>
+      <ThemedView
+        type="accent"
+        elevated={!disabled}
+        style={[styles.button, disabled && styles.disabled]}>
         <ThemedText type="smallBold" themeColor="accentText">
           {label}
         </ThemedText>
