@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Pressable, SectionList, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ReadingStatsCard } from '@/components/reading-stats-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { TranslationSwitcher } from '@/components/translation-switcher';
@@ -39,6 +40,8 @@ export default function ReadScreen() {
           </ThemedText>
           <TranslationSwitcher />
         </ThemedView>
+
+        <ReadingStatsCard />
 
         <SectionList
           style={styles.list}

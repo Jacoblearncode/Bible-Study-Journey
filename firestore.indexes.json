@@ -24,6 +24,14 @@
         { "fieldPath": "book", "order": "ASCENDING" },
         { "fieldPath": "chapter", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "readingLogs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": [

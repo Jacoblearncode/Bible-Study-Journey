@@ -15,6 +15,7 @@ import { bookDisplayName, type Book, type Verse } from '@/lib/bible-types';
 import { removeHighlight, saveHighlight, subscribeToChapterHighlights } from '@/lib/notes-queries';
 import type { Highlight } from '@/lib/notes-types';
 import { useReadingPreferences } from '@/lib/reading-preferences';
+import { logChapterRead } from '@/lib/reading-log-queries';
 
 function VerseEditor({
   bookId,
@@ -116,6 +117,13 @@ export default function ChapterReaderScreen() {
   useEffect(() => {
     getChapterVerses(db, translationId, bookId, chapter).then(setVerses);
   }, [db, translationId, bookId, chapter]);
+
+  useEffect(() => {
+    if (!user) return;
+    logChapterRead(user.uid, bookId, chapter).catch((err) => {
+      console.warn('Log chapter read error', err);
+    });
+  }, [user, bookId, chapter]);
 
   useEffect(() => {
     getChapterCount(db, translationId, bookId).then(setChapterCount);

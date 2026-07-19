@@ -1,7 +1,8 @@
 # Firestore data model — circles, posts, highlights
 
 Status: **implemented** in full (circles/membership/posts in
-`src/lib/circles-queries.ts`; highlights/notes in `src/lib/notes-queries.ts`).
+`src/lib/circles-queries.ts`; highlights/notes in `src/lib/notes-queries.ts`;
+the daily reading log/streak in `src/lib/reading-log-queries.ts`).
 The deployed rules live in `firestore.rules` and `firestore.indexes.json` at
 the repo root, not in this doc — treat this file as the rationale/reference,
 not the source of truth for what's live.
@@ -24,6 +25,13 @@ posts/{postId}
 
 highlights/{userId}_{book}_{chapter}_{verse}
   - userId, book, chapter, verse, note, updatedAt
+
+readingLogs/{userId}_{yyyy-mm-dd}
+  - userId, date (local device date, not UTC)
+  - chapters: array of { bookId, chapter } — auto-appended (via arrayUnion)
+    whenever the user opens a chapter that day, deduped for free
+  - note (optional, user-written), photoUrl (optional, Cloudinary secure_url)
+  - updatedAt
 ```
 
 Three deviations from the original plan's draft:
@@ -39,6 +47,10 @@ Three deviations from the original plan's draft:
   build and use; add color back if a real request for it shows up. The
   document doubles as a note holder even with an empty `note` string, so
   "highlighted, no note" and "highlighted with a note" are the same shape.
+- `readingLogs` wasn't in the original plan draft at all — added for the
+  daily streak/progress feature. One doc per user per day (not one per
+  highlight or per photo) keeps "did they engage today" and the optional
+  note/photo for that day as a single, simple write target.
 
 ## Listing a user's circles
 
@@ -78,8 +90,9 @@ that for the literal logic. Principles behind it:
   `get()` on the circle doc reliably sees `createdBy` already set.
 - Users can only write posts to circles they belong to.
 - Only a post's author or a circle admin can delete it.
-- Highlights/notes are private to each user by default (not yet
-  implemented — this rule exists in `firestore.rules` ahead of the feature).
+- Highlights/notes and the daily reading log are both private to each user
+  — same owner-only read/create/update/delete split, for the same reason
+  (`resource`/`request.resource` don't both exist for every operation).
 - Membership checks read the specific circle's member doc
   (`circles/$(circleId)/members/$(request.auth.uid)`), not a denormalized
   array — the array could drift out of sync; the subcollection is the
