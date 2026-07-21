@@ -13,11 +13,14 @@ import {
   createCircle,
   createPost,
   joinCircle,
+  removeMember,
+  setMemberRole,
+  subscribeToCircleMembers,
   subscribeToPosts,
   subscribeToUserCircles,
   type UserCircle,
 } from '@/lib/circles-queries';
-import type { Post } from '@/lib/circles-types';
+import type { CircleMember, CircleRole, Post } from '@/lib/circles-types';
 
 function formatRelativeTime(millis: number | null): string {
   if (millis == null) return 'just now';
@@ -69,7 +72,12 @@ function CreateCircleForm({ onDone }: { onDone: (circleId: string) => void }) {
     setError(null);
     setSubmitting(true);
     try {
-      const id = await createCircle(user.uid, name.trim(), description.trim());
+      const id = await createCircle(
+        user.uid,
+        name.trim(),
+        description.trim(),
+        user.displayName ?? 'Anonymous'
+      );
       setCreatedId(id);
       onDone(id);
     } catch (err) {
@@ -126,7 +134,7 @@ function JoinCircleForm({ onDone }: { onDone: (circleId: string) => void }) {
     setSubmitting(true);
     try {
       const trimmedId = circleId.trim();
-      await joinCircle(user.uid, trimmedId);
+      await joinCircle(user.uid, trimmedId, user.displayName ?? 'Anonymous');
       onDone(trimmedId);
     } catch (err) {
       if (err instanceof CircleNotFoundError) {
@@ -184,6 +192,78 @@ function PostComposer({ circleId }: { circleId: string }) {
   );
 }
 
+function MemberRow({
+  member,
+  isSelf,
+  canManage,
+  onRemove,
+  onSetRole,
+}: {
+  member: CircleMember;
+  isSelf: boolean;
+  canManage: boolean;
+  onRemove: () => void;
+  onSetRole: (role: CircleRole) => void;
+}) {
+  return (
+    <View style={styles.memberRow}>
+      <View style={styles.memberInfo}>
+        <ThemedText type="smallBold">
+          {member.displayName}
+          {isSelf ? ' (you)' : ''}
+        </ThemedText>
+        <ThemedText type="small" themeColor="textSecondary">
+          {member.role === 'admin' ? 'Admin' : 'Member'}
+        </ThemedText>
+      </View>
+      {canManage && !isSelf && (
+        <View style={styles.memberActions}>
+          <SecondaryButton
+            label={member.role === 'admin' ? 'Make member' : 'Make admin'}
+            onPress={() => onSetRole(member.role === 'admin' ? 'member' : 'admin')}
+          />
+          <SecondaryButton label="Remove" onPress={onRemove} />
+        </View>
+      )}
+    </View>
+  );
+}
+
+function MemberRoster({
+  circleId,
+  isAdmin,
+  onLeave,
+}: {
+  circleId: string;
+  isAdmin: boolean;
+  onLeave: () => void;
+}) {
+  const { user } = useAuth();
+  const [members, setMembers] = useState<CircleMember[]>([]);
+
+  useEffect(() => {
+    return subscribeToCircleMembers(circleId, setMembers);
+  }, [circleId]);
+
+  if (!user) return null;
+
+  return (
+    <ThemedView type="backgroundElement" elevated style={styles.rosterCard}>
+      {members.map((member) => (
+        <MemberRow
+          key={member.userId}
+          member={member}
+          isSelf={member.userId === user.uid}
+          canManage={isAdmin}
+          onRemove={() => removeMember(circleId, member.userId)}
+          onSetRole={(role) => setMemberRole(circleId, member.userId, role)}
+        />
+      ))}
+      <SecondaryButton label="Leave circle" onPress={onLeave} />
+    </ThemedView>
+  );
+}
+
 function PostRow({ post }: { post: Post }) {
   return (
     <ThemedView type="backgroundElement" elevated style={styles.postRow}>
@@ -205,6 +285,7 @@ export default function CirclesScreen() {
   const [activeCircleId, setActiveCircleId] = useState<string | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [openAction, setOpenAction] = useState<'create' | 'join' | null>(null);
+  const [showMembers, setShowMembers] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -326,6 +407,26 @@ export default function CirclesScreen() {
               )}
             />
 
+            {activeCircle && (
+              <Pressable onPress={() => setShowMembers((v) => !v)}>
+                <ThemedText type="small" themeColor="accent">
+                  {showMembers ? 'Hide members' : 'Members'}
+                </ThemedText>
+              </Pressable>
+            )}
+
+            {activeCircle && showMembers && (
+              <MemberRoster
+                circleId={activeCircle.id}
+                isAdmin={activeCircle.role === 'admin'}
+                onLeave={async () => {
+                  if (!user) return;
+                  await removeMember(activeCircle.id, user.uid);
+                  setShowMembers(false);
+                }}
+              />
+            )}
+
             {activeCircle && <PostComposer circleId={activeCircle.id} />}
 
             <FlatList
@@ -418,5 +519,23 @@ const styles = StyleSheet.create({
   postHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  rosterCard: {
+    padding: Spacing.three,
+    borderRadius: Spacing.three,
+    gap: Spacing.two,
+  },
+  memberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.two,
+  },
+  memberInfo: {
+    gap: Spacing.half,
+  },
+  memberActions: {
+    flexDirection: 'row',
+    gap: Spacing.one,
   },
 });

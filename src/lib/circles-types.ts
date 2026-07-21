@@ -12,6 +12,13 @@ export type Membership = {
   role: CircleRole;
 };
 
+export type CircleMember = {
+  userId: string;
+  role: CircleRole;
+  displayName: string;
+  joinedAtMillis: number | null;
+};
+
 export type Post = {
   id: string;
   circleId: string;

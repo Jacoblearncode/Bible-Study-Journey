@@ -2,6 +2,7 @@ import {
   addDoc,
   collection,
   collectionGroup,
+  deleteDoc,
   doc,
   getDoc,
   limit,
@@ -10,12 +11,13 @@ import {
   query,
   serverTimestamp,
   setDoc,
+  updateDoc,
   where,
   type Unsubscribe,
 } from 'firebase/firestore';
 
 import { firestore } from '@/lib/firebase';
-import type { Circle, CircleRole, Post } from '@/lib/circles-types';
+import type { Circle, CircleMember, CircleRole, Post } from '@/lib/circles-types';
 
 export type UserCircle = Circle & { role: CircleRole };
 
@@ -50,7 +52,12 @@ export function subscribeToUserCircles(
   });
 }
 
-export async function createCircle(uid: string, name: string, description: string): Promise<string> {
+export async function createCircle(
+  uid: string,
+  name: string,
+  description: string,
+  displayName: string
+): Promise<string> {
   // Sequential writes rather than a batch: the members/{uid} create rule
   // checks the circle's createdBy field via get(), which needs the circle
   // doc to already be committed — a batch's rule evaluation order for
@@ -65,6 +72,7 @@ export async function createCircle(uid: string, name: string, description: strin
   await setDoc(doc(firestore, 'circles', circleRef.id, 'members', uid), {
     userId: uid,
     role: 'admin',
+    displayName,
     joinedAt: serverTimestamp(),
   });
 
@@ -73,7 +81,7 @@ export async function createCircle(uid: string, name: string, description: strin
 
 export class CircleNotFoundError extends Error {}
 
-export async function joinCircle(uid: string, circleId: string): Promise<void> {
+export async function joinCircle(uid: string, circleId: string, displayName: string): Promise<void> {
   const circleSnap = await getDoc(doc(firestore, 'circles', circleId));
   if (!circleSnap.exists()) {
     throw new CircleNotFoundError(`No circle with id ${circleId}`);
@@ -82,8 +90,44 @@ export async function joinCircle(uid: string, circleId: string): Promise<void> {
   await setDoc(doc(firestore, 'circles', circleId, 'members', uid), {
     userId: uid,
     role: 'member',
+    displayName,
     joinedAt: serverTimestamp(),
   });
+}
+
+export function subscribeToCircleMembers(
+  circleId: string,
+  callback: (members: CircleMember[]) => void
+): Unsubscribe {
+  const membersQuery = query(
+    collection(firestore, 'circles', circleId, 'members'),
+    orderBy('joinedAt', 'asc')
+  );
+  return onSnapshot(membersQuery, (snapshot) => {
+    callback(
+      snapshot.docs.map((memberDoc) => {
+        const data = memberDoc.data();
+        return {
+          userId: memberDoc.id,
+          role: data.role as CircleRole,
+          displayName: (data.displayName as string | undefined) ?? 'Member',
+          joinedAtMillis: (data.joinedAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? null,
+        };
+      })
+    );
+  });
+}
+
+export async function removeMember(circleId: string, memberId: string): Promise<void> {
+  await deleteDoc(doc(firestore, 'circles', circleId, 'members', memberId));
+}
+
+export async function setMemberRole(
+  circleId: string,
+  memberId: string,
+  role: CircleRole
+): Promise<void> {
+  await updateDoc(doc(firestore, 'circles', circleId, 'members', memberId), { role });
 }
 
 const POSTS_LIMIT = 50;

@@ -18,6 +18,7 @@ circles/{circleId}
   members/{userId}
     - userId            (duplicated from the doc id — see "Listing a user's circles" below)
     - role: "member" | "admin"
+    - displayName       (denormalized at join/create time, same reasoning as authorName below)
     - joinedAt
 
 posts/{postId}
@@ -34,9 +35,14 @@ readingLogs/{userId}_{yyyy-mm-dd}
   - updatedAt
 ```
 
-Three deviations from the original plan's draft:
+Deviations from the original plan's draft:
 - A `userId` field inside each `circles/{circleId}/members/{userId}` doc,
   duplicating the document ID — needed for the collection group query below.
+- `displayName` denormalized onto each member doc at join/create time, same
+  reasoning and trade-off as `authorName` below — lets the member roster UI
+  (`src/app/(tabs)/circles.tsx`) render names without an extra `users/{uid}`
+  read per row. Member docs written before this existed fall back to
+  showing "Member" in the UI rather than a blank name.
 - `authorName` denormalized onto each post at write time, instead of joining
   against `users/{authorId}` to render the feed. Trade-off: the name shown
   on a post is a snapshot from when it was posted, not live-updated if
