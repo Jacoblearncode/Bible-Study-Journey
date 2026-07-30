@@ -151,10 +151,23 @@ export function subscribeToPosts(circleId: string, callback: (posts: Post[]) => 
           authorName: data.authorName,
           text: data.text,
           createdAtMillis: data.createdAt?.toMillis?.() ?? null,
+          flagged: (data.flagged as boolean | undefined) ?? false,
         };
       })
     );
   });
+}
+
+export async function flagPost(postId: string): Promise<void> {
+  await updateDoc(doc(firestore, 'posts', postId), { flagged: true });
+}
+
+export async function unflagPost(postId: string): Promise<void> {
+  await updateDoc(doc(firestore, 'posts', postId), { flagged: false });
+}
+
+export async function deletePostById(postId: string): Promise<void> {
+  await deleteDoc(doc(firestore, 'posts', postId));
 }
 
 export async function createPost(

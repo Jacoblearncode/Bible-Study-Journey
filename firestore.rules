@@ -63,7 +63,18 @@ service cloud.firestore {
       allow create: if isSignedIn()
         && request.resource.data.authorId == request.auth.uid
         && isMember(request.resource.data.circleId);
-      allow update: if isSignedIn() && request.auth.uid == resource.data.authorId;
+      // Author/admin can update any field. Any other circle member can
+      // still "update" a post, but only to flag it: the diff() check
+      // pins the write to touch nothing but `flagged`, and only to set it
+      // true — a plain member can report a post but can't un-flag their
+      // own or anyone else's report.
+      allow update: if isSignedIn() && (
+        request.auth.uid == resource.data.authorId ||
+        isAdminOf(resource.data.circleId) ||
+        (isMember(resource.data.circleId) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['flagged']) &&
+          request.resource.data.flagged == true)
+      );
       allow delete: if isSignedIn()
         && (request.auth.uid == resource.data.authorId || isAdminOf(resource.data.circleId));
     }

@@ -26,4 +26,5 @@ export type Post = {
   authorName: string;
   text: string;
   createdAtMillis: number | null;
+  flagged: boolean;
 };

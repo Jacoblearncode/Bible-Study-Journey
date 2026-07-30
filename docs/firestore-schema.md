@@ -96,6 +96,11 @@ that for the literal logic. Principles behind it:
   `get()` on the circle doc reliably sees `createdBy` already set.
 - Users can only write posts to circles they belong to.
 - Only a post's author or a circle admin can delete it.
+- Any circle member can flag a post (report it), but only the author or a
+  circle admin can un-flag or delete it. The `update` rule uses
+  `request.resource.data.diff(resource.data).affectedKeys().hasOnly([...])`
+  to scope a member's write to just the `flagged` field (and only to set
+  it `true`) without opening up arbitrary edits to someone else's post.
 - Highlights/notes and the daily reading log are both private to each user
   — same owner-only read/create/update/delete split, for the same reason
   (`resource`/`request.resource` don't both exist for every operation).

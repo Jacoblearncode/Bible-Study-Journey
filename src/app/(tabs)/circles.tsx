@@ -12,12 +12,15 @@ import {
   CircleNotFoundError,
   createCircle,
   createPost,
+  deletePostById,
+  flagPost,
   joinCircle,
   removeMember,
   setMemberRole,
   subscribeToCircleMembers,
   subscribeToPosts,
   subscribeToUserCircles,
+  unflagPost,
   type UserCircle,
 } from '@/lib/circles-queries';
 import type { CircleMember, CircleRole, Post } from '@/lib/circles-types';
@@ -264,7 +267,24 @@ function MemberRoster({
   );
 }
 
-function PostRow({ post }: { post: Post }) {
+function PostRow({
+  post,
+  isAdmin,
+  currentUserId,
+  onFlag,
+  onUnflag,
+  onDelete,
+}: {
+  post: Post;
+  isAdmin: boolean;
+  currentUserId: string | undefined;
+  onFlag: () => void;
+  onUnflag: () => void;
+  onDelete: () => void;
+}) {
+  const isAuthor = post.authorId === currentUserId;
+  const canDelete = isAuthor || isAdmin;
+
   return (
     <ThemedView type="backgroundElement" elevated style={styles.postRow}>
       <View style={styles.postHeader}>
@@ -274,6 +294,35 @@ function PostRow({ post }: { post: Post }) {
         </ThemedText>
       </View>
       <ThemedText>{post.text}</ThemedText>
+      <View style={styles.postActions}>
+        {post.flagged ? (
+          <ThemedText type="small" themeColor="accent">
+            Flagged
+          </ThemedText>
+        ) : (
+          !isAuthor && (
+            <Pressable onPress={onFlag}>
+              <ThemedText type="small" themeColor="textSecondary">
+                Flag
+              </ThemedText>
+            </Pressable>
+          )
+        )}
+        {post.flagged && isAdmin && (
+          <Pressable onPress={onUnflag}>
+            <ThemedText type="small" themeColor="textSecondary">
+              Unflag
+            </ThemedText>
+          </Pressable>
+        )}
+        {canDelete && (
+          <Pressable onPress={onDelete}>
+            <ThemedText type="small" themeColor="textSecondary">
+              Remove
+            </ThemedText>
+          </Pressable>
+        )}
+      </View>
     </ThemedView>
   );
 }
@@ -434,7 +483,16 @@ export default function CirclesScreen() {
               contentContainerStyle={styles.feedContent}
               data={posts}
               keyExtractor={(p) => p.id}
-              renderItem={({ item }) => <PostRow post={item} />}
+              renderItem={({ item }) => (
+                <PostRow
+                  post={item}
+                  isAdmin={activeCircle?.role === 'admin'}
+                  currentUserId={user?.uid}
+                  onFlag={() => flagPost(item.id)}
+                  onUnflag={() => unflagPost(item.id)}
+                  onDelete={() => deletePostById(item.id)}
+                />
+              )}
               ListEmptyComponent={
                 <ThemedText themeColor="textSecondary" style={styles.description}>
                   No posts yet. Be the first to share something with this circle.
@@ -519,6 +577,11 @@ const styles = StyleSheet.create({
   postHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  postActions: {
+    flexDirection: 'row',
+    gap: Spacing.three,
+    marginTop: Spacing.half,
   },
   rosterCard: {
     padding: Spacing.three,
